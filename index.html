@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bouncing Ball</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden; /* 防止滚动条 */
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // 设置 canvas 尺寸
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // 小球属性
+    let ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 20,
+      dx: 4, // x 方向速度
+      dy: 3, // y 方向速度
+    };
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "blue";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function update() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawBall();
+
+      // 更新小球位置
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // 检查边界碰撞
+      if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+        ball.dx = -ball.dx; // 反弹
+      }
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+        ball.dy = -ball.dy; // 反弹
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+
+    // 如果窗口尺寸改变，更新 canvas 大小
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
