@@ -50,25 +50,48 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    const INITIAL_SPEED = 4;
+    const INITIAL_RADIUS = 20;
     let balls = [createBall()];
-    let maxBalls = 5;
-    let minBalls = 1;
+    const maxBalls = 5;
+    const minBalls = 1;
+
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
 
     function createBall() {
-      const radius = 20;
-      return {
+      const radius = INITIAL_RADIUS;
+      const color = getRandomColor();
+      const ball = {
         x: Math.random() * (canvas.width - radius * 2) + radius,
         y: Math.random() * (canvas.height - radius * 2) + radius,
         radius: radius,
-        dx: (Math.random() > 0.5 ? 1 : -1) * 4,
-        dy: (Math.random() > 0.5 ? 1 : -1) * 4,
+        dx: (Math.random() > 0.5 ? 1 : -1) * INITIAL_SPEED,
+        dy: (Math.random() > 0.5 ? 1 : -1) * INITIAL_SPEED,
+        color: color,
       };
+      scheduleColorChange(ball);
+      return ball;
+    }
+
+    function scheduleColorChange(ball) {
+      const interval = Math.random() * 4000 + 3000; // 3-7秒
+      setTimeout(() => {
+        ball.color = getRandomColor();
+        scheduleColorChange(ball);
+      }, interval);
     }
 
     function drawBall(ball) {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-      ctx.fillStyle = "blue";
+      ctx.fillStyle = ball.color;
       ctx.fill();
       ctx.closePath();
     }
@@ -81,7 +104,7 @@
         ball.x += ball.dx;
         ball.y += ball.dy;
 
-      
+        // 边界反弹
         if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
           ball.dx = -ball.dx;
         }
@@ -89,7 +112,7 @@
           ball.dy = -ball.dy;
         }
 
-        
+        // 小球之间弹开
         for (let j = i + 1; j < balls.length; j++) {
           let other = balls[j];
           let dx = other.x - ball.x;
@@ -119,8 +142,17 @@
 
     function changeSpeed(delta) {
       balls.forEach(ball => {
-        ball.dx += delta * Math.sign(ball.dx);
-        ball.dy += delta * Math.sign(ball.dy);
+        let newDx = ball.dx + delta * Math.sign(ball.dx);
+        let newDy = ball.dy + delta * Math.sign(ball.dy);
+
+        const speedLimit = INITIAL_SPEED * 3;
+
+        if (Math.abs(newDx) <= speedLimit) {
+          ball.dx = newDx;
+        }
+        if (Math.abs(newDy) <= speedLimit) {
+          ball.dy = newDy;
+        }
       });
     }
 
@@ -135,7 +167,8 @@
 
     function changeNumber(delta) {
       if (delta > 0 && balls.length < maxBalls) {
-        balls.push(createBall());
+        const newBall = createBall();
+        balls.push(newBall);
       } else if (delta < 0 && balls.length > minBalls) {
         balls.pop();
       }
@@ -150,4 +183,3 @@
   </script>
 </body>
 </html>
-
