@@ -2,37 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bouncing Ball</title>
+  <title>Bouncing Balls with Controls</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden; /* 防止滚动条 */
+      overflow: hidden;
     }
     canvas {
       display: block;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    button {
+      margin: 2px;
     }
   </style>
 </head>
 <body>
   <canvas id="myCanvas"></canvas>
+  <div id="controls">
+    <div>
+      <strong>Speed:</strong>
+      <button onclick="changeSpeed(-1)">-</button>
+      <button onclick="changeSpeed(1)">+</button>
+    </div>
+    <div>
+      <strong>Size:</strong>
+      <button onclick="changeSize(-1)">-</button>
+      <button onclick="changeSize(1)">+</button>
+    </div>
+    <div>
+      <strong>Number:</strong>
+      <button onclick="changeNumber(-1)">-</button>
+      <button onclick="changeNumber(1)">+</button>
+    </div>
+  </div>
+
   <script>
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
-
-    // 设置 canvas 尺寸
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // 小球属性
-    let ball = {
-      x: canvas.width / 2,
-      y: canvas.height / 2,
-      radius: 20,
-      dx: 4, // x 方向速度
-      dy: 3, // y 方向速度
-    };
+    let balls = [createBall()];
+    let maxBalls = 5;
+    let minBalls = 1;
 
-    function drawBall() {
+    function createBall() {
+      const radius = 20;
+      return {
+        x: Math.random() * (canvas.width - radius * 2) + radius,
+        y: Math.random() * (canvas.height - radius * 2) + radius,
+        radius: radius,
+        dx: (Math.random() > 0.5 ? 1 : -1) * 4,
+        dy: (Math.random() > 0.5 ? 1 : -1) * 4,
+      };
+    }
+
+    function drawBall(ball) {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
       ctx.fillStyle = "blue";
@@ -41,29 +74,75 @@
     }
 
     function update() {
-      // 清空画布
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < balls.length; i++) {
+        let ball = balls[i];
 
-      drawBall();
+        ball.x += ball.dx;
+        ball.y += ball.dy;
 
-      // 更新小球位置
-      ball.x += ball.dx;
-      ball.y += ball.dy;
+        // 边界反弹
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+          ball.dx = -ball.dx;
+        }
+        if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+          ball.dy = -ball.dy;
+        }
 
-      // 检查边界碰撞
-      if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-        ball.dx = -ball.dx; // 反弹
+        // 小球之间弹开
+        for (let j = i + 1; j < balls.length; j++) {
+          let other = balls[j];
+          let dx = other.x - ball.x;
+          let dy = other.y - ball.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < ball.radius + other.radius) {
+            let angle = Math.atan2(dy, dx);
+            let overlap = (ball.radius + other.radius - distance) / 2;
+            ball.x -= Math.cos(angle) * overlap;
+            ball.y -= Math.sin(angle) * overlap;
+            other.x += Math.cos(angle) * overlap;
+            other.y += Math.sin(angle) * overlap;
+
+            let tempDx = ball.dx;
+            let tempDy = ball.dy;
+            ball.dx = other.dx;
+            ball.dy = other.dy;
+            other.dx = tempDx;
+            other.dy = tempDy;
+          }
+        }
+
+        drawBall(ball);
       }
-      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
-        ball.dy = -ball.dy; // 反弹
-      }
-
       requestAnimationFrame(update);
+    }
+
+    function changeSpeed(delta) {
+      balls.forEach(ball => {
+        ball.dx += delta * Math.sign(ball.dx);
+        ball.dy += delta * Math.sign(ball.dy);
+      });
+    }
+
+    function changeSize(delta) {
+      balls.forEach(ball => {
+        let newRadius = ball.radius + delta * 5;
+        if (newRadius >= 10 && newRadius <= 40) {
+          ball.radius = newRadius;
+        }
+      });
+    }
+
+    function changeNumber(delta) {
+      if (delta > 0 && balls.length < maxBalls) {
+        balls.push(createBall());
+      } else if (delta < 0 && balls.length > minBalls) {
+        balls.pop();
+      }
     }
 
     update();
 
-    // 如果窗口尺寸改变，更新 canvas 大小
     window.addEventListener('resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
